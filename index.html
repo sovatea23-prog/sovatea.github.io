@@ -56,11 +56,10 @@ nav button.on{color:var(--lf)}nav svg{width:22px;height:22px;stroke:currentColor
 
 <section class="tab on" id="t-weigh">
  <div class="card"><h2>1. Verify plucker</h2>
-  <div class="cam"><video id="vid" playsinline muted autoplay></video><canvas id="ov"></canvas><div class="ph" id="ph">Camera is off. Tap Start camera to verify a plucker's face.</div></div>
+  <div class="cam"><video id="vid" playsinline muted autoplay></video><canvas id="ov"></canvas><canvas id="snap" style="display:none;z-index:2"></canvas><div class="ph" id="ph">Camera is off. Tap Start camera to verify a plucker's face.</div></div>
   <div class="row" style="margin-top:8px"><button id="cStart">Start camera</button><button class="alt" id="cFlip">Flip camera</button><button class="go" id="cSnap">Scan face</button></div>
   <div id="idRes" style="margin-top:8px" class="chip">Not verified</div>
-  <canvas id="snap" style="display:none"></canvas>
-  <label>Plucker (manual override)</label><select id="plk"></select>
+    <label>Plucker (manual override)</label><select id="plk"></select>
  </div>
  <div class="card"><h2>2. Weigh leaf</h2>
   <div class="scale" id="scale">0.00<small id="sstat">Simulator running</small></div>
@@ -151,7 +150,7 @@ let stream=null,facing='user',meshT=null,verified=null;
 async function camStart(){
  try{if(stream)stream.getTracks().forEach(t=>t.stop());
   stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:facing},audio:false});
-  $('#vid').srcObject=stream;$('#ph').style.display='none';mesh()}
+  const v=$('#vid');v.srcObject=stream;v.setAttribute('playsinline','');v.muted=true;try{await v.play()}catch(_){};$('#ph').style.display='none';mesh()}
  catch(e){$('#ph').style.display='grid';$('#ph').textContent='Camera unavailable ('+(e.name||'error')+'). Allow camera permission, or pick the plucker manually.'}}
 function mesh(){const c=$('#ov'),x=c.getContext('2d');clearInterval(meshT);
  meshT=setInterval(()=>{c.width=c.clientWidth;c.height=c.clientHeight;x.clearRect(0,0,c.width,c.height);if(!stream)return;
@@ -162,8 +161,13 @@ function mesh(){const c=$('#ov'),x=c.getContext('2d');clearInterval(meshT);
 $('#cStart').onclick=camStart;
 $('#cFlip').onclick=()=>{facing=facing=='user'?'environment':'user';camStart()};
 $('#cSnap').onclick=()=>{
- if(stream){const v=$('#vid'),c=$('#snap');c.width=v.videoWidth||320;c.height=v.videoHeight||240;c.getContext('2d').drawImage(v,0,0)}
- const r=$('#idRes');r.textContent='Matching face…';
+ const c=$('#snap'),b=$('#cSnap'),r=$('#idRes'),v=$('#vid');
+ if(c.style.display=='block'){c.style.display='none';b.textContent='Scan face';r.textContent='Not verified';return}
+ if(!stream||!v.videoWidth){r.innerHTML='<span class="bad">Start the camera first and wait until you see the live picture.</span>';return}
+ c.width=v.videoWidth;c.height=v.videoHeight;const x=c.getContext('2d');
+ if(facing=='user'){x.translate(c.width,0);x.scale(-1,1)}
+ x.drawImage(v,0,0,c.width,c.height);c.style.display='block';b.textContent='Retake';
+ r.textContent='Matching face…';
  setTimeout(()=>{const p=S.pluckers[Math.floor(Math.random()*S.pluckers.length)],conf=92+Math.random()*7;verified=p;$('#plk').value=p.id;
   r.innerHTML=`<span class="ok">✔ ${p.name} (${p.id})</span> · ${conf.toFixed(1)}% match <small>(simulated)</small>`},900)};
 $('#plk').onchange=()=>{verified=null;$('#idRes').textContent='Manual: '+S.pluckers.find(p=>p.id==$('#plk').value).name};
