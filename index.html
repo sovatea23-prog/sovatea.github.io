@@ -8,8 +8,8 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Sova Tea">
 <title>Sova Tea Estate – Leaf & Wages</title>
-<link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'%3E%3Crect width='192' height='192' fill='%2314342B'/%3E%3Cpath d='M96 36c-40 10-52 50-40 90 40 4 74-24 40-90z' fill='%237BC86C'/%3E%3C/svg%3E">
-<link rel="manifest" id="mf">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="manifest" href="manifest.json">
 <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@400;600;800&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
 <style>
@@ -127,15 +127,11 @@ try{const x=localStorage.getItem('sova');if(x)S=JSON.parse(x)}catch(e){}
 const save=()=>{try{localStorage.setItem('sova',JSON.stringify(S))}catch(e){}};
 
 /* ---------- PWA: inline manifest + service worker ---------- */
-const icon="data:image/svg+xml,"+encodeURIComponent("<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'><rect width='192' height='192' fill='#14342B'/><path d='M96 36c-40 10-52 50-40 90 40 4 74-24 40-90z' fill='#7BC86C'/></svg>");
-try{const m={name:'Sova Tea Estate Leaf & Wages',short_name:'Sova Tea',display:'standalone',background_color:'#14342B',theme_color:'#14342B',start_url:'./',icons:[{src:icon,sizes:'192x192 512x512',type:'image/svg+xml',purpose:'any'}]};
-$('#mf').href=URL.createObjectURL(new Blob([JSON.stringify(m)],{type:'application/manifest+json'}))}catch(e){}
 let dip;addEventListener('beforeinstallprompt',e=>{e.preventDefault();dip=e;$('#inst').style.display=''});
 $('#inst').onclick=async()=>{if(dip){dip.prompt();dip=null;$('#inst').style.display='none'}};
 (function(){const el=$('#swst');
- if(!('serviceWorker' in navigator)){el.textContent='Offline cache: not supported here';return}
- try{const sw="const C='sova-v1';self.addEventListener('install',e=>self.skipWaiting());self.addEventListener('activate',e=>e.waitUntil(clients.claim()));self.addEventListener('fetch',e=>{if(e.request.method!=='GET')return;e.respondWith(fetch(e.request).then(r=>{const c=r.clone();caches.open(C).then(x=>x.put(e.request,c));return r}).catch(()=>caches.match(e.request)))});";
- navigator.serviceWorker.register(URL.createObjectURL(new Blob([sw],{type:'text/javascript'}))).then(()=>el.textContent='Offline cache: active').catch(()=>el.textContent='Offline cache: needs sw.js hosted on your own domain (HTTPS)')}catch(e){el.textContent='Offline cache: unavailable in this preview'}})();
+ if(!('serviceWorker' in navigator)){el.textContent='Offline cache: not supported';return}
+ navigator.serviceWorker.register('sw.js').then(()=>el.textContent='Offline cache: active').catch(()=>el.textContent='Offline cache: failed (needs HTTPS)')})();
 
 /* ---------- Nav ---------- */
 const tabs=[['weigh','Weigh','M12 3v18M5 8l7-5 7 5M4 21h16'],['wage','Wages','M4 7h16v10H4zM12 10v4'],['loss','Transit','M3 12h14l-4-4m4 4l-4 4M21 5v14'],['fact','Factory','M3 20V10l6 4V10l6 4V6h6v14z'],['set','Setup','M12 8a4 4 0 100 8 4 4 0 000-8zM12 2v3M12 19v3M2 12h3M19 12h3']];
