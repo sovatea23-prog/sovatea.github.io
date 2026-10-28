@@ -1,0 +1,1061 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Classic Consultants - Tea Estate Leaf & Wage System</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        tea: {
+                            50: '#f0fdf4',
+                            100: '#dcfce7',
+                            200: '#bbf7d0',
+                            500: '#22c55e',
+                            700: '#15803d',
+                            800: '#2d6a4f',
+                            900: '#1b4332',
+                            950: '#081c15',
+                        },
+                        accent: {
+                            gold: '#d4af37',
+                            amber: '#f59e0b',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap');
+        body { font-family: 'Inter', sans-serif; }
+        .font-mono { font-family: 'JetBrains+Mono', monospace; }
+        
+        /* Thermal Receipt Styling */
+        .receipt-paper {
+            background: #fffdf9;
+            box-shadow: 0 10px 25px -5px rgba(0,0,0,0.1), 0 8px 10px -6px rgba(0,0,0,0.1);
+            position: relative;
+        }
+        .receipt-paper::after {
+            content: "";
+            position: absolute;
+            bottom: -10px;
+            left: 0;
+            right: 0;
+            height: 10px;
+            background: linear-gradient(-45deg, transparent 5px, #fffdf9 0), linear-gradient(45deg, transparent 5px, #fffdf9 0);
+            background-repeat: repeat-x;
+            background-size: 10px 10px;
+        }
+
+        /* Pulse Camera Effect */
+        .scanner-line {
+            height: 2px;
+            background: #22c55e;
+            box-shadow: 0 0 12px #22c55e;
+            animation: scan 2s infinite ease-in-out;
+        }
+        @keyframes scan {
+            0% { top: 10%; opacity: 0.8; }
+            50% { top: 90%; opacity: 1; }
+            100% { top: 10%; opacity: 0.8; }
+        }
+
+        /* Custom Scrollbars */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: #f1f1f1; }
+        ::-webkit-scrollbar-thumb { background: #2d6a4f; border-radius: 4px; }
+    </style>
+</head>
+<body class="bg-slate-100 text-slate-800 antialiased flex flex-col min-h-screen">
+
+    <!-- Top Navigation Bar -->
+    <header class="bg-tea-900 text-white shadow-lg sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <!-- Logo & Brand -->
+                <div class="flex items-center space-x-3">
+                    <div class="w-10 h-10 rounded-lg bg-tea-800 border border-tea-500/30 flex items-center justify-center text-tea-200 shadow-inner">
+                        <i class="fa-solid fa-leaf text-xl text-tea-500"></i>
+                    </div>
+                    <div>
+                        <span class="text-lg font-bold tracking-tight text-white flex items-center gap-2">
+                            CLASSIC CONSULTANTS
+                            <span class="bg-tea-800 text-tea-200 text-xs px-2 py-0.5 rounded border border-tea-700 font-normal">v3.4 Enterprise</span>
+                        </span>
+                        <p class="text-xs text-tea-200/80">Green Leaf Collection & Wage Automation System</p>
+                    </div>
+                </div>
+
+                <!-- Global Network / Offline Mode Switcher -->
+                <div class="flex items-center space-x-4">
+                    <div class="flex items-center bg-tea-950/60 px-3 py-1.5 rounded-full border border-tea-800">
+                        <span id="network-status-dot" class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse mr-2"></span>
+                        <span id="network-status-text" class="text-xs font-medium text-slate-200">Online Mode</span>
+                        <label class="relative inline-flex items-center cursor-pointer ml-3">
+                            <input type="checkbox" id="network-toggle" class="sr-only peer" checked onchange="toggleNetworkMode()">
+                            <div class="w-9 h-5 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-tea-500"></div>
+                        </label>
+                    </div>
+
+                    <!-- Sync Queue Pill -->
+                    <div id="sync-queue-badge" class="hidden sm:flex items-center bg-amber-500/20 text-amber-300 border border-amber-500/40 px-3 py-1 rounded-full text-xs font-semibold cursor-pointer" onclick="triggerManualSync()">
+                        <i class="fa-solid fa-arrows-rotate mr-1.5 animate-spin"></i>
+                        <span id="pending-count">0</span> Pending Sync
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- System Navigation Tabs -->
+        <div class="bg-tea-950/80 border-t border-tea-800/60">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <nav class="flex space-x-2 sm:space-x-6 overflow-x-auto py-2 text-xs sm:text-sm font-medium">
+                    <button onclick="switchTab('kiosk')" id="tab-kiosk" class="tab-btn active px-3 py-2 rounded-md transition text-white bg-tea-800 flex items-center gap-2">
+                        <i class="fa-solid fa-mobile-screen-button text-tea-500"></i>
+                        <span>1. Plucker Kiosk</span>
+                    </button>
+                    <button onclick="switchTab('wages')" id="tab-wages" class="tab-btn px-3 py-2 rounded-md transition text-slate-300 hover:text-white hover:bg-tea-900/60 flex items-center gap-2">
+                        <i class="fa-solid fa-calculator text-amber-400"></i>
+                        <span>2. Wages & Rates</span>
+                    </button>
+                    <button onclick="switchTab('reconcile')" id="tab-reconcile" class="tab-btn px-3 py-2 rounded-md transition text-slate-300 hover:text-white hover:bg-tea-900/60 flex items-center gap-2">
+                        <i class="fa-solid fa-scale-balanced text-sky-400"></i>
+                        <span>3. Field vs Factory</span>
+                    </button>
+                    <button onclick="switchTab('factory')" id="tab-factory" class="tab-btn px-3 py-2 rounded-md transition text-slate-300 hover:text-white hover:bg-tea-900/60 flex items-center gap-2">
+                        <i class="fa-solid fa-industry text-emerald-400"></i>
+                        <span>4. Factory & E-Invoice</span>
+                    </button>
+                </nav>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <main class="flex-grow max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6">
+
+        <!-- ========================================== -->
+        <!-- TAB 1: WEIGHMENT POINT / PLUCKER KIOSK     -->
+        <!-- ========================================== -->
+        <div id="view-kiosk" class="tab-content space-y-6">
+            <!-- Alert Banner -->
+            <div class="bg-tea-900 text-white p-4 rounded-xl shadow-md border border-tea-700 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                <div class="flex items-center space-x-3">
+                    <div class="p-2 bg-tea-800 rounded-lg text-tea-200">
+                        <i class="fa-solid fa-location-dot text-xl"></i>
+                    </div>
+                    <div>
+                        <h2 class="font-bold text-base">Collection Weighment Terminal #04 - Assam Central Division</h2>
+                        <p class="text-xs text-tea-200">Estate Section: Bramhaputra North Block C | Operator: R. Borah (ID: OP-88)</p>
+                    </div>
+                </div>
+                <div class="flex items-center gap-2 text-xs font-mono bg-tea-950 px-3 py-1.5 rounded-lg border border-tea-800">
+                    <i class="fa-solid fa-bluetooth text-blue-400"></i> Scale ID: BLE-SCALE-9902 (Connected)
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                <!-- Left Column: Face Scan & Scale Integration -->
+                <div class="lg:col-span-7 space-y-6">
+                    
+                    <!-- 1. Face Recognition Card -->
+                    <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+                        <div class="px-5 py-4 bg-slate-50 border-b border-slate-200 flex justify-between items-center">
+                            <h3 class="font-bold text-slate-800 flex items-center gap-2">
+                                <i class="fa-solid fa-user-check text-tea-800"></i> 1. Plucker Verification (Face AI)
+                            </h3>
+                            <span id="face-status-tag" class="text-xs bg-slate-200 text-slate-700 px-2.5 py-1 rounded-full font-medium">Ready to Scan</span>
+                        </div>
+                        <div class="p-5">
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <!-- Camera Scanner Box -->
+                                <div class="relative bg-slate-900 rounded-xl overflow-hidden h-52 flex flex-col items-center justify-center border-2 border-slate-700 shadow-inner">
+                                    <img id="face-avatar" src="https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=300&auto=format&fit=crop&q=80" class="w-full h-full object-cover opacity-60 transition duration-300" alt="Plucker Face Scan">
+                                    <div id="scanner-line-elem" class="hidden absolute left-0 right-0 scanner-line"></div>
+                                    <div class="absolute inset-0 border-2 border-dashed border-tea-500/50 rounded-xl pointer-events-none m-3"></div>
+                                    <div id="camera-overlay-text" class="absolute bottom-3 bg-slate-950/80 px-3 py-1 rounded text-white text-xs font-mono flex items-center gap-1.5">
+                                        <i class="fa-solid fa-camera text-tea-500"></i> Face Mesh Active
+                                    </div>
+                                </div>
+
+                                <!-- Plucker Details Card -->
+                                <div class="flex flex-col justify-between space-y-3 bg-slate-50 p-4 rounded-xl border border-slate-200">
+                                    <div>
+                                        <span class="text-xs font-bold text-slate-400 uppercase tracking-wider">Identified Plucker</span>
+                                        <h4 id="plucker-name" class="text-lg font-bold text-slate-800 mt-1">Sunita Das</h4>
+                                        <p id="plucker-id" class="text-xs text-tea-800 font-mono font-bold">ID: P-1042 • Permanent Staff</p>
+                                    </div>
+                                    <div class="space-y-1 text-xs text-slate-600 border-t border-slate-200 pt-2">
+                                        <div class="flex justify-between"><span>Section:</span> <strong id="plucker-section">Block C-2 (Classic)</strong></div>
+                                        <div class="flex justify-between"><span>Today's Logged:</span> <strong id="plucker-today-leaf" class="text-slate-900">32.5 kg (2 sessions)</strong></div>
+                                        <div class="flex justify-between"><span>Avg Fine Count:</span> <span class="text-emerald-700 font-bold">71%</span></div>
+                                    </div>
+                                    <button onclick="simulateFaceScan()" class="w-full py-2 bg-tea-800 hover:bg-tea-900 text-white rounded-lg text-xs font-semibold shadow transition flex items-center justify-center gap-2">
+                                        <i class="fa-solid fa-expand"></i> Scan Next Plucker
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 2. Bluetooth Scale Integration & Fine Count -->
+                    <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+                        <div class="px-5 py-4 bg-slate-50 border-b border-slate-200 flex justify-between items-center">
+                            <h3 class="font-bold text-slate-800 flex items-center gap-2">
+                                <i class="fa-solid fa-weight-scale text-tea-800"></i> 2. Digital Bluetooth Scale Intake
+                            </h3>
+                            <span class="text-xs text-emerald-700 bg-emerald-100 border border-emerald-300 px-2 py-0.5 rounded font-mono">
+                                <i class="fa-solid fa-wifi text-[10px] mr-1"></i>AUTO-READING
+                            </span>
+                        </div>
+                        <div class="p-5 space-y-5">
+                            
+                            <!-- Scale Reading Display -->
+                            <div class="bg-slate-950 text-white rounded-xl p-4 border-2 border-slate-800 relative overflow-hidden flex flex-col sm:flex-row items-center justify-between gap-4 shadow-inner">
+                                <div>
+                                    <div class="text-xs font-mono text-slate-400">CURRENT SCALE WEIGHT</div>
+                                    <div class="flex items-baseline space-x-2">
+                                        <span id="live-weight" class="text-4xl sm:text-5xl font-black font-mono text-emerald-400 tracking-wider">24.85</span>
+                                        <span class="text-lg font-bold text-slate-400">KG</span>
+                                    </div>
+                                    <div class="text-[11px] text-slate-500 font-mono mt-1">Tare deducted: 1.20 kg (Basket ID #09)</div>
+                                </div>
+
+                                <div class="flex flex-col gap-2 w-full sm:w-auto">
+                                    <button onclick="fetchScaleWeight()" class="px-4 py-2.5 bg-tea-800 hover:bg-tea-700 text-white text-xs font-semibold rounded-lg shadow transition flex items-center justify-center gap-2">
+                                        <i class="fa-solid fa-arrows-rotate"></i> Re-fetch Weight
+                                    </button>
+                                    <button onclick="tareScale()" class="px-4 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-mono rounded border border-slate-700 flex items-center justify-center gap-1">
+                                        <i class="fa-solid fa-circle-minus"></i> Zero / Tare Scale
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Leaf Quality Fine Count Slider -->
+                            <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-3">
+                                <div class="flex justify-between items-center">
+                                    <label class="text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center gap-1.5">
+                                        <i class="fa-solid fa-leaf text-tea-700"></i> Fine Leaf Count % Assessment
+                                    </label>
+                                    <span id="fine-count-val" class="text-base font-black text-tea-800 bg-tea-100 px-3 py-0.5 rounded-full border border-tea-300">68%</span>
+                                </div>
+                                <input type="range" id="fine-count-slider" min="40" max="95" value="68" class="w-full h-2 bg-slate-300 rounded-lg appearance-none cursor-pointer accent-tea-800" oninput="updateFineCount(this.value)">
+                                <div class="flex justify-between text-[11px] text-slate-500 font-medium">
+                                    <span class="text-red-600">Coarse (&lt;50%)</span>
+                                    <span class="text-amber-600">Standard (50-65%)</span>
+                                    <span class="text-emerald-700 font-bold">Premium Fine (&gt;65%)</span>
+                                </div>
+                            </div>
+
+                            <!-- Action Button -->
+                            <button onclick="logWeighmentRecord()" class="w-full py-3.5 bg-tea-800 hover:bg-tea-900 text-white font-bold rounded-xl shadow-lg hover:shadow-xl transition flex items-center justify-center gap-2 text-sm sm:text-base">
+                                <i class="fa-solid fa-print"></i> Log Weight & Print Thermal Receipt
+                            </button>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- Right Column: Live Receipt & Recent Logs -->
+                <div class="lg:col-span-5 space-y-6">
+                    
+                    <!-- Live Thermal Receipt Preview -->
+                    <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+                        <div class="px-5 py-3 bg-slate-800 text-white flex justify-between items-center">
+                            <h3 class="font-bold text-sm flex items-center gap-2">
+                                <i class="fa-solid fa-receipt text-amber-400"></i> Instant Thermal Receipt Preview
+                            </h3>
+                            <button onclick="printReceipt()" class="text-xs bg-amber-500 hover:bg-amber-600 text-slate-900 font-bold px-2.5 py-1 rounded shadow transition">
+                                <i class="fa-solid fa-print mr-1"></i> Print Now
+                            </button>
+                        </div>
+                        
+                        <div class="p-6 bg-slate-200 flex justify-center">
+                            <!-- Printable Receipt Ticket -->
+                            <div id="thermal-receipt" class="receipt-paper w-full max-w-xs p-5 font-mono text-slate-900 text-xs rounded-t shadow-md">
+                                <div class="text-center border-b border-dashed border-slate-400 pb-3 mb-3">
+                                    <h4 class="font-bold text-sm uppercase tracking-wider">CLASSIC CONSULTANTS</h4>
+                                    <p class="text-[10px] text-slate-600">Assam Estate Division #04</p>
+                                    <p class="text-[10px] text-slate-500 mt-1">Date: <span id="rec-date">2026-10-28 14:22</span></p>
+                                </div>
+
+                                <div class="space-y-1.5 border-b border-dashed border-slate-400 pb-3 mb-3">
+                                    <div class="flex justify-between"><span class="text-slate-500">Receipt No:</span> <strong id="rec-no">TXN-88492</strong></div>
+                                    <div class="flex justify-between"><span class="text-slate-500">Plucker ID:</span> <strong id="rec-id">P-1042</strong></div>
+                                    <div class="flex justify-between"><span class="text-slate-500">Plucker Name:</span> <strong id="rec-name">Sunita Das</strong></div>
+                                    <div class="flex justify-between"><span class="text-slate-500">Section:</span> <strong id="rec-sec">Block C-2</strong></div>
+                                </div>
+
+                                <div class="space-y-1.5 border-b border-dashed border-slate-400 pb-3 mb-3">
+                                    <div class="flex justify-between"><span>Gross Weight:</span> <span id="rec-gross">26.05 kg</span></div>
+                                    <div class="flex justify-between"><span>Tare Weight:</span> <span id="rec-tare">1.20 kg</span></div>
+                                    <div class="flex justify-between font-bold text-sm bg-slate-100 p-1 rounded"><span>Net Leaf Weight:</span> <span id="rec-net" class="text-tea-900">24.85 kg</span></div>
+                                    <div class="flex justify-between"><span>Fine Leaf Count:</span> <strong id="rec-fine" class="text-emerald-700">68%</strong></div>
+                                </div>
+
+                                <div class="space-y-1.5 border-b border-dashed border-slate-400 pb-3 mb-3">
+                                    <div class="flex justify-between"><span class="text-slate-500">Est. Base Earning:</span> <span id="rec-earned">₹ 223.65</span></div>
+                                    <div class="flex justify-between"><span class="text-slate-500">Fine Bonus Slab:</span> <span id="rec-bonus" class="text-emerald-700">+ ₹ 12.42</span></div>
+                                </div>
+
+                                <div class="text-center pt-1">
+                                    <div class="inline-block bg-slate-900 text-white text-[9px] px-2 py-1 rounded mb-2">VERIFIED BY FACE AI</div>
+                                    <p class="text-[9px] text-slate-400">Keep receipt for weekly settlement</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Offline Queue Log Table -->
+                    <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-4">
+                        <div class="flex justify-between items-center mb-3">
+                            <h4 class="font-bold text-xs text-slate-700 uppercase tracking-wider flex items-center gap-1.5">
+                                <i class="fa-solid fa-clock-rotate-left text-tea-800"></i> Local Session Weighment Log
+                            </h4>
+                            <span class="text-[11px] text-slate-500 font-mono" id="session-counter">Total Today: 4 Logs</span>
+                        </div>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left text-xs">
+                                <thead>
+                                    <tr class="bg-slate-100 text-slate-600 border-b border-slate-200">
+                                        <th class="p-2">Time</th>
+                                        <th class="p-2">Plucker</th>
+                                        <th class="p-2 text-right">Net Leaf</th>
+                                        <th class="p-2 text-right">Fine %</th>
+                                        <th class="p-2 text-center">Sync</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="kiosk-logs-body" class="divide-y divide-slate-100 font-mono">
+                                    <!-- Dynamic rows added here -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
+        <!-- ========================================== -->
+        <!-- TAB 2: PLUCKER WAGE & LEDGER ENGINE        -->
+        <!-- ========================================== -->
+        <div id="view-wages" class="tab-content space-y-6 hidden">
+            
+            <!-- Rate Slab Configurator Header -->
+            <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-5">
+                <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-4 border-b border-slate-200 pb-4">
+                    <div>
+                        <h2 class="text-lg font-bold text-slate-800 flex items-center gap-2">
+                            <i class="fa-solid fa-sliders text-amber-500"></i> Estate Wage Rate Slab Configurator
+                        </h2>
+                        <p class="text-xs text-slate-500">Automated formula applied across all weighment entries</p>
+                    </div>
+                    <button onclick="recalculateAllWages()" class="px-4 py-2 bg-tea-800 hover:bg-tea-900 text-white rounded-lg text-xs font-semibold transition flex items-center gap-2 shadow">
+                        <i class="fa-solid fa-calculator"></i> Re-Calculate All Ledgers
+                    </button>
+                </div>
+
+                <!-- Slab Inputs -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <div class="bg-slate-50 p-3 rounded-lg border border-slate-200">
+                        <label class="text-xs font-bold text-slate-600">Base Wage Rate (per kg)</label>
+                        <div class="mt-1 flex items-center">
+                            <span class="px-2.5 py-1.5 bg-slate-200 text-slate-600 rounded-l font-bold text-xs">₹</span>
+                            <input type="number" id="slab-base-rate" value="9.00" step="0.50" class="w-full p-1.5 text-sm font-mono border border-slate-300 rounded-r focus:outline-none focus:ring-1 focus:ring-tea-800">
+                        </div>
+                        <p class="text-[10px] text-slate-400 mt-1">Standard rate up to daily target</p>
+                    </div>
+
+                    <div class="bg-slate-50 p-3 rounded-lg border border-slate-200">
+                        <label class="text-xs font-bold text-slate-600">Benchmark Daily Target</label>
+                        <div class="mt-1 flex items-center">
+                            <input type="number" id="slab-target-kg" value="20.0" step="1" class="w-full p-1.5 text-sm font-mono border border-slate-300 rounded-l focus:outline-none focus:ring-1 focus:ring-tea-800">
+                            <span class="px-2.5 py-1.5 bg-slate-200 text-slate-600 rounded-r font-bold text-xs">KG</span>
+                        </div>
+                        <p class="text-[10px] text-slate-400 mt-1">Min threshold for full base pay</p>
+                    </div>
+
+                    <div class="bg-slate-50 p-3 rounded-lg border border-slate-200">
+                        <label class="text-xs font-bold text-slate-600">Over-Quota Incentive</label>
+                        <div class="mt-1 flex items-center">
+                            <span class="px-2.5 py-1.5 bg-slate-200 text-slate-600 rounded-l font-bold text-xs">₹</span>
+                            <input type="number" id="slab-over-rate" value="12.50" step="0.5" class="w-full p-1.5 text-sm font-mono border border-slate-300 rounded-r focus:outline-none focus:ring-1 focus:ring-tea-800">
+                        </div>
+                        <p class="text-[10px] text-slate-400 mt-1">Rate per kg for leaf harvested &gt; target</p>
+                    </div>
+
+                    <div class="bg-slate-50 p-3 rounded-lg border border-slate-200">
+                        <label class="text-xs font-bold text-slate-600">Fine Leaf Quality Bonus</label>
+                        <div class="mt-1 flex items-center">
+                            <span class="px-2.5 py-1.5 bg-slate-200 text-slate-600 rounded-l font-bold text-xs">₹</span>
+                            <input type="number" id="slab-fine-bonus" value="1.50" step="0.25" class="w-full p-1.5 text-sm font-mono border border-slate-300 rounded-r focus:outline-none focus:ring-1 focus:ring-tea-800">
+                        </div>
+                        <p class="text-[10px] text-slate-400 mt-1">Bonus per kg when Fine Count &gt; 70%</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Plucker Ledger & Automated Disbursal Table -->
+            <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+                <div class="px-5 py-4 bg-slate-50 border-b border-slate-200 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+                    <div>
+                        <h3 class="font-bold text-slate-800 flex items-center gap-2">
+                            <i class="fa-solid fa-book-journal-whills text-tea-800"></i> Daily Plucker Master Wage Ledger
+                        </h3>
+                        <p class="text-xs text-slate-500">Automated calculation with direct bank/UPI payout simulator</p>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <button onclick="disburseAllUPI()" class="px-3.5 py-1.5 bg-emerald-700 hover:bg-emerald-800 text-white rounded-lg text-xs font-semibold transition shadow flex items-center gap-1.5">
+                            <i class="fa-solid fa-bolt"></i> Disburse All via UPI / Bank
+                        </button>
+                    </div>
+                </div>
+
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left text-xs">
+                        <thead class="bg-slate-100 text-slate-600 font-semibold border-b border-slate-200 uppercase tracking-wider">
+                            <tr>
+                                <th class="p-3">Plucker Details</th>
+                                <th class="p-3 text-right">Total Leaf (Kg)</th>
+                                <th class="p-3 text-right">Fine Leaf %</th>
+                                <th class="p-3 text-right">Base Pay</th>
+                                <th class="p-3 text-right">Incentive</th>
+                                <th class="p-3 text-right">Quality Bonus</th>
+                                <th class="p-3 text-right text-slate-900">Gross Payable</th>
+                                <th class="p-3 text-center">Payment Status</th>
+                                <th class="p-3 text-center">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="wage-ledger-body" class="divide-y divide-slate-100 font-mono">
+                            <!-- Dynamic Plucker Rows inserted here -->
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Ledger Footer Summary -->
+                <div class="p-4 bg-slate-900 text-white flex flex-col sm:flex-row justify-between items-center gap-4 text-xs font-mono">
+                    <div class="flex items-center space-x-4">
+                        <span>Total Leaf: <strong id="sum-total-leaf" class="text-emerald-400">0.0 kg</strong></span>
+                        <span>•</span>
+                        <span>Avg Fine Count: <strong id="sum-avg-fine" class="text-amber-400">0%</strong></span>
+                    </div>
+                    <div class="flex items-center space-x-3">
+                        <span class="text-slate-400">Total Net Payout Required:</span>
+                        <span id="sum-total-payout" class="text-base font-bold text-emerald-400">₹ 0.00</span>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- ========================================== -->
+        <!-- TAB 3: FIELD VS FACTORY RECONCILIATION     -->
+        <!-- ========================================== -->
+        <div id="view-reconcile" class="tab-content space-y-6 hidden">
+            
+            <!-- Reconciliation Header Stats -->
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-6">
+                <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
+                    <div class="text-xs font-bold text-slate-400 uppercase">1. Total Field Leaf Weighed</div>
+                    <div class="text-2xl sm:text-3xl font-black font-mono text-slate-800 mt-2 flex items-baseline gap-2">
+                        <span id="recon-field-leaf">1,485.50</span> <span class="text-sm font-semibold text-slate-500">kg</span>
+                    </div>
+                    <p class="text-xs text-slate-500 mt-1">Logged from 8 Field Weighment Points</p>
+                </div>
+
+                <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
+                    <div class="text-xs font-bold text-slate-400 uppercase">2. Received Leaf at Factory Gate</div>
+                    <div class="text-2xl sm:text-3xl font-black font-mono text-slate-800 mt-2 flex items-baseline gap-2">
+                        <span id="recon-factory-leaf">1,452.00</span> <span class="text-sm font-semibold text-slate-500">kg</span>
+                    </div>
+                    <p class="text-xs text-slate-500 mt-1">Weighed at Bought Leaf Factory Gate</p>
+                </div>
+
+                <div id="recon-status-card" class="bg-amber-50 p-5 rounded-xl border border-amber-200 shadow-sm">
+                    <div class="text-xs font-bold text-amber-800 uppercase">Transit Shortage / Loss</div>
+                    <div class="text-2xl sm:text-3xl font-black font-mono text-amber-700 mt-2 flex items-baseline gap-2">
+                        <span id="recon-shortage-val">33.50</span> <span class="text-sm font-semibold">kg (2.25%)</span>
+                    </div>
+                    <p id="recon-alert-text" class="text-xs text-amber-800 font-medium mt-1">⚠️ Warning: Transit loss exceeds 1.5% threshold</p>
+                </div>
+            </div>
+
+            <!-- Field vs Factory Lot-by-Lot Comparison Table -->
+            <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+                <div class="px-5 py-4 bg-slate-50 border-b border-slate-200 flex justify-between items-center">
+                    <div>
+                        <h3 class="font-bold text-slate-800 flex items-center gap-2">
+                            <i class="fa-solid fa-truck-ramp-box text-sky-600"></i> Vehicle Dispatch & Gate Receipt Tracker
+                        </h3>
+                        <p class="text-xs text-slate-500">Real-time discrepancy check for leaf transported from section pluckers to factory</p>
+                    </div>
+                    <button onclick="simulateNewDispatch()" class="px-3.5 py-1.5 bg-sky-700 hover:bg-sky-800 text-white rounded-lg text-xs font-semibold transition shadow flex items-center gap-1.5">
+                        <i class="fa-solid fa-plus"></i> Simulate Vehicle Arrival
+                    </button>
+                </div>
+
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left text-xs">
+                        <thead class="bg-slate-100 text-slate-600 font-semibold border-b border-slate-200 uppercase tracking-wider">
+                            <tr>
+                                <th class="p-3">Vehicle / Trip ID</th>
+                                <th class="p-3">Estate Section</th>
+                                <th class="p-3 text-right">Field Weight (kg)</th>
+                                <th class="p-3 text-right">Factory Gate (kg)</th>
+                                <th class="p-3 text-right">Variance / Loss</th>
+                                <th class="p-3 text-center">Shortage %</th>
+                                <th class="p-3 text-center">Audit Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="recon-table-body" class="divide-y divide-slate-100 font-mono">
+                            <!-- Dynamic Reconciliation rows -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- ========================================== -->
+        <!-- TAB 4: FACTORY OPERATIONS & E-INVOICE       -->
+        <!-- ========================================== -->
+        <div id="view-factory" class="tab-content space-y-6 hidden">
+            
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                <!-- Left: Recovery & Grade Costing Calculator -->
+                <div class="lg:col-span-6 space-y-6">
+                    <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-5 space-y-5">
+                        <div class="border-b border-slate-200 pb-3 flex justify-between items-center">
+                            <h3 class="font-bold text-slate-800 flex items-center gap-2">
+                                <i class="fa-solid fa-chart-pie text-emerald-700"></i> Made Tea Recovery & Costing Engine
+                            </h3>
+                            <span class="text-xs bg-emerald-100 text-emerald-800 px-2.5 py-1 rounded font-mono font-bold">Standard 22.5% Target</span>
+                        </div>
+
+                        <!-- Interactive Inputs for Recovery -->
+                        <div class="grid grid-cols-2 gap-4">
+                            <div class="bg-slate-50 p-3 rounded-lg border border-slate-200">
+                                <label class="text-xs font-bold text-slate-600">Green Leaf Processed</label>
+                                <div class="mt-1 flex items-center">
+                                    <input type="number" id="fac-green-leaf" value="1452.00" oninput="calculateFactoryCosting()" class="w-full p-1.5 text-sm font-mono border border-slate-300 rounded focus:outline-none focus:ring-1 focus:ring-tea-800">
+                                    <span class="ml-2 text-xs font-bold text-slate-500">kg</span>
+                                </div>
+                            </div>
+
+                            <div class="bg-slate-50 p-3 rounded-lg border border-slate-200">
+                                <label class="text-xs font-bold text-slate-600">Made Tea Output</label>
+                                <div class="mt-1 flex items-center">
+                                    <input type="number" id="fac-made-tea" value="333.96" oninput="calculateFactoryCosting()" class="w-full p-1.5 text-sm font-mono border border-slate-300 rounded focus:outline-none focus:ring-1 focus:ring-tea-800">
+                                    <span class="ml-2 text-xs font-bold text-slate-500">kg</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Computed Metric Cards -->
+                        <div class="grid grid-cols-2 gap-4">
+                            <div class="bg-tea-900 text-white p-4 rounded-xl">
+                                <span class="text-[11px] text-tea-200 uppercase font-mono">Made Tea Recovery Ratio</span>
+                                <div id="calc-recovery-pct" class="text-3xl font-black font-mono text-tea-200 mt-1">23.00%</div>
+                                <p class="text-[10px] text-tea-200/80 mt-1">Optimal recovery achieved</p>
+                            </div>
+
+                            <div class="bg-slate-900 text-white p-4 rounded-xl">
+                                <span class="text-[11px] text-slate-400 uppercase font-mono">Raw Leaf Cost per Kg Made Tea</span>
+                                <div id="calc-leaf-cost-mt" class="text-3xl font-black font-mono text-amber-400 mt-1">₹ 43.15</div>
+                                <p class="text-[10px] text-slate-400 mt-1">Based on avg green leaf payout</p>
+                            </div>
+                        </div>
+
+                        <!-- Grade Wise Breakdown -->
+                        <div class="space-y-2 pt-2">
+                            <h4 class="text-xs font-bold text-slate-700 uppercase tracking-wider">Manufactured Grade Distribution</h4>
+                            <div class="space-y-2 text-xs font-mono">
+                                <div class="flex justify-between items-center p-2 bg-slate-50 rounded">
+                                    <span>BOP (Broken Orange Pekoe) - 45%</span>
+                                    <strong class="text-slate-800">150.28 kg</strong>
+                                </div>
+                                <div class="flex justify-between items-center p-2 bg-slate-50 rounded">
+                                    <span>Fannings (CTC Premium) - 35%</span>
+                                    <strong class="text-slate-800 text-right">116.88 kg</strong>
+                                </div>
+                                <div class="flex justify-between items-center p-2 bg-slate-50 rounded">
+                                    <span>Dust Grade - 20%</span>
+                                    <strong class="text-slate-800">66.80 kg</strong>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right: Auction Confirmation & GST E-Invoice Simulator -->
+                <div class="lg:col-span-6 space-y-6">
+                    <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+                        <div class="px-5 py-3 bg-slate-900 text-white flex justify-between items-center">
+                            <h3 class="font-bold text-sm flex items-center gap-2">
+                                <i class="fa-solid fa-file-invoice-dollar text-emerald-400"></i> Auction Lot GST E-Invoice Preview
+                            </h3>
+                            <button onclick="generateEWayBill()" class="text-xs bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-3 py-1.5 rounded transition shadow flex items-center gap-1">
+                                <i class="fa-solid fa-qrcode"></i> Generate IRN / QR
+                            </button>
+                        </div>
+
+                        <div class="p-6 space-y-4 font-mono text-xs">
+                            <!-- Invoice Header Info -->
+                            <div class="border-b border-slate-200 pb-3 flex justify-between">
+                                <div>
+                                    <h4 class="font-bold text-slate-900 text-sm">CLASSIC CONSULTANTS TEA FACTORY</h4>
+                                    <p class="text-slate-500 text-[11px]">GSTIN: 18AABCC1234D1Z5 • Guwahati Auction Center</p>
+                                </div>
+                                <div class="text-right">
+                                    <span class="bg-emerald-100 text-emerald-800 text-[10px] font-bold px-2 py-0.5 rounded">TAX INVOICE</span>
+                                    <p class="text-slate-600 mt-1">Inv: <strong id="inv-no">INV/2026/GT-904</strong></p>
+                                </div>
+                            </div>
+
+                            <!-- Auction Lot Details -->
+                            <div class="bg-slate-50 p-3 rounded-lg border border-slate-200 space-y-2">
+                                <div class="flex justify-between"><span class="text-slate-500">Buyer / Broker:</span> <strong>Guwahati Tea Auction Lot #402</strong></div>
+                                <div class="flex justify-between"><span class="text-slate-500">Grade & Package:</span> <span>CTC Fine Fannings (40 Paper Sacks)</span></div>
+                                <div class="flex justify-between"><span class="text-slate-500">Net Weight Sold:</span> <span class="font-bold">1,200.00 kg</span></div>
+                                <div class="flex justify-between"><span class="text-slate-500">Auction Hammer Price:</span> <span class="text-emerald-700 font-bold">₹ 245.00 / kg</span></div>
+                            </div>
+
+                            <!-- Tax Calculation breakdown -->
+                            <div class="space-y-1.5 border-t border-slate-200 pt-3">
+                                <div class="flex justify-between"><span>Total Taxable Value:</span> <span>₹ 2,94,000.00</span></div>
+                                <div class="flex justify-between text-slate-600"><span>CGST @ 2.5%:</span> <span>₹ 7,350.00</span></div>
+                                <div class="flex justify-between text-slate-600"><span>SGST @ 2.5%:</span> <span>₹ 7,350.00</span></div>
+                                <div class="flex justify-between font-bold text-sm text-slate-900 bg-slate-100 p-2 rounded">
+                                    <span>Total Invoice Amount:</span>
+                                    <span id="inv-grand-total" class="text-tea-900">₹ 3,08,700.00</span>
+                                </div>
+                            </div>
+
+                            <!-- Simulated IRN QR Code Container -->
+                            <div id="qr-container" class="bg-slate-100 p-4 rounded-xl border border-dashed border-slate-300 flex items-center justify-between">
+                                <div class="space-y-1 text-[10px] text-slate-600">
+                                    <div>IRN: <span class="font-bold text-slate-800">4e8b91a...992c10a</span></div>
+                                    <div>Ack No: <strong>142200948211</strong></div>
+                                    <div>Status: <span class="text-emerald-700 font-bold">GST Portal Verified</span></div>
+                                </div>
+                                <div class="w-16 h-16 bg-white border border-slate-300 p-1 flex items-center justify-center rounded">
+                                    <i class="fa-solid fa-qrcode text-4xl text-slate-800"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+    </main>
+
+    <!-- Global Notification Modal -->
+    <div id="modal-backdrop" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-xl shadow-2xl max-w-md w-full p-6 text-center space-y-4">
+            <div id="modal-icon" class="w-14 h-14 bg-tea-100 text-tea-800 rounded-full flex items-center justify-center mx-auto text-2xl">
+                <i class="fa-solid fa-check"></i>
+            </div>
+            <h3 id="modal-title" class="text-lg font-bold text-slate-800">Action Completed</h3>
+            <p id="modal-msg" class="text-xs text-slate-600">The operation was performed successfully.</p>
+            <button onclick="closeModal()" class="w-full py-2 bg-tea-800 hover:bg-tea-900 text-white font-semibold rounded-lg text-xs transition">
+                Dismiss
+            </button>
+        </div>
+    </div>
+
+    <!-- JavaScript Application Logic -->
+    <script>
+        // Initial Mock Database State
+        const pluckersDB = [
+            { id: "P-1042", name: "Sunita Das", section: "Block C-2", todayKg: 24.85, finePct: 68, image: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=300&auto=format&fit=crop&q=80", paid: false },
+            { id: "P-1088", name: "Biren Gogoi", section: "Block A-1", todayKg: 31.20, finePct: 74, image: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=300&auto=format&fit=crop&q=80", paid: false },
+            { id: "P-1105", name: "Meena Munda", section: "Block C-1", todayKg: 18.50, finePct: 62, image: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=300&auto=format&fit=crop&q=80", paid: false },
+            { id: "P-1120", name: "Joyram Kurmi", section: "Block B-3", todayKg: 28.00, finePct: 71, image: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=300&auto=format&fit=crop&q=80", paid: true },
+            { id: "P-1144", name: "Lakshmi Tanti", section: "Block A-2", todayKg: 22.40, finePct: 66, image: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=300&auto=format&fit=crop&q=80", paid: false }
+        ];
+
+        let kioskLogs = [
+            { time: "14:15", id: "P-1088", name: "Biren Gogoi", net: 31.20, fine: 74, synced: true },
+            { time: "13:50", id: "P-1120", name: "Joyram Kurmi", net: 28.00, fine: 71, synced: true },
+            { time: "12:30", id: "P-1105", name: "Meena Munda", net: 18.50, fine: 62, synced: true },
+            { time: "11:10", id: "P-1144", name: "Lakshmi Tanti", net: 22.40, fine: 66, synced: true }
+        ];
+
+        let reconciliationLots = [
+            { id: "TRIP- Assam-801", section: "Block A (North)", fieldKg: 520.00, gateKg: 512.50, lossKg: 7.50, lossPct: 1.44, ok: true },
+            { id: "TRIP- Assam-802", section: "Block C (Classic)", fieldKg: 645.50, gateKg: 628.00, lossKg: 17.50, lossPct: 2.71, ok: false },
+            { id: "TRIP- Assam-803", section: "Block B (East)", fieldKg: 320.00, gateKg: 311.50, lossKg: 8.50, lossPct: 2.65, ok: false }
+        ];
+
+        let isOnline = true;
+        let pendingSyncCount = 0;
+        let activePluckerIdx = 0;
+
+        // Initialize App on Page Load
+        window.onload = function() {
+            lucide.createIcons();
+            renderKioskLogs();
+            renderWageLedger();
+            renderReconciliationTable();
+            calculateFactoryCosting();
+            updateThermalReceipt();
+        };
+
+        // Tab Navigation
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('active', 'bg-tea-800', 'text-white');
+                btn.classList.add('text-slate-300');
+            });
+
+            document.getElementById(`view-${tabId}`).classList.remove('hidden');
+            const activeBtn = document.getElementById(`tab-${tabId}`);
+            activeBtn.classList.add('active', 'bg-tea-800', 'text-white');
+            activeBtn.classList.remove('text-slate-300');
+        }
+
+        // Online/Offline Mode Handler
+        function toggleNetworkMode() {
+            isOnline = document.getElementById('network-toggle').checked;
+            const statusDot = document.getElementById('network-status-dot');
+            const statusText = document.getElementById('network-status-text');
+
+            if (isOnline) {
+                statusDot.className = "w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse mr-2";
+                statusText.innerText = "Online Mode";
+                if (pendingSyncCount > 0) {
+                    triggerManualSync();
+                }
+            } else {
+                statusDot.className = "w-2.5 h-2.5 rounded-full bg-amber-500 mr-2";
+                statusText.innerText = "Offline Mode (Local)";
+                showModal("Offline Mode Activated", "Weighment logs will be stored in local queue memory until network connectivity is restored.", "fa-wifi");
+            }
+        }
+
+        // Manual Sync trigger
+        function triggerManualSync() {
+            if (pendingSyncCount === 0) {
+                showModal("System Synced", "All collection records are fully synchronized with central server.", "fa-circle-check");
+                return;
+            }
+
+            pendingSyncCount = 0;
+            kioskLogs.forEach(log => log.synced = true);
+            document.getElementById('sync-queue-badge').classList.add('hidden');
+            renderKioskLogs();
+            showModal("Sync Completed", "All offline records successfully uploaded to central estate server.", "fa-cloud-arrow-up");
+        }
+
+        // Simulate Face Scanning
+        function simulateFaceScan() {
+            const scannerLine = document.getElementById('scanner-line-elem');
+            const statusTag = document.getElementById('face-status-tag');
+            
+            scannerLine.classList.remove('hidden');
+            statusTag.innerText = "Scanning Mesh...";
+            statusTag.className = "text-xs bg-amber-100 text-amber-800 px-2.5 py-1 rounded-full font-medium animate-pulse";
+
+            setTimeout(() => {
+                activePluckerIdx = (activePluckerIdx + 1) % pluckersDB.length;
+                const plucker = pluckersDB[activePluckerIdx];
+
+                document.getElementById('face-avatar').src = plucker.image;
+                document.getElementById('plucker-name').innerText = plucker.name;
+                document.getElementById('plucker-id').innerText = `ID: ${plucker.id} • Permanent Staff`;
+                document.getElementById('plucker-section').innerText = plucker.section;
+                document.getElementById('plucker-today-leaf').innerText = `${plucker.todayKg} kg`;
+
+                scannerLine.classList.add('hidden');
+                statusTag.innerText = "Verified ✅";
+                statusTag.className = "text-xs bg-emerald-100 text-emerald-800 px-2.5 py-1 rounded-full font-bold";
+
+                updateThermalReceipt();
+            }, 1200);
+        }
+
+        // Bluetooth Scale Simulation
+        function fetchScaleWeight() {
+            const simulatedWeight = (18 + Math.random() * 16).toFixed(2);
+            document.getElementById('live-weight').innerText = simulatedWeight;
+            updateThermalReceipt();
+        }
+
+        function tareScale() {
+            document.getElementById('live-weight').innerText = "0.00";
+            updateThermalReceipt();
+        }
+
+        function updateFineCount(val) {
+            document.getElementById('fine-count-val').innerText = `${val}%`;
+            updateThermalReceipt();
+        }
+
+        // Live Thermal Receipt Updater
+        function updateThermalReceipt() {
+            const plucker = pluckersDB[activePluckerIdx];
+            const weight = parseFloat(document.getElementById('live-weight').innerText) || 0;
+            const fineVal = parseInt(document.getElementById('fine-count-slider').value);
+            const baseRate = parseFloat(document.getElementById('slab-base-rate').value);
+
+            const baseEarned = (weight * baseRate).toFixed(2);
+            const bonusEarned = (fineVal > 70 ? weight * 0.5 : 0).toFixed(2);
+
+            document.getElementById('rec-no').innerText = `TXN-${Math.floor(10000 + Math.random() * 90000)}`;
+            document.getElementById('rec-id').innerText = plucker.id;
+            document.getElementById('rec-name').innerText = plucker.name;
+            document.getElementById('rec-sec').innerText = plucker.section;
+            document.getElementById('rec-gross').innerText = `${(weight + 1.2).toFixed(2)} kg`;
+            document.getElementById('rec-net').innerText = `${weight.toFixed(2)} kg`;
+            document.getElementById('rec-fine').innerText = `${fineVal}%`;
+            document.getElementById('rec-earned').innerText = `₹ ${baseEarned}`;
+            document.getElementById('rec-bonus').innerText = `+ ₹ ${bonusEarned}`;
+        }
+
+        // Log Weighment Record Action
+        function logWeighmentRecord() {
+            const weight = parseFloat(document.getElementById('live-weight').innerText);
+            if (!weight || weight <= 0) {
+                showModal("Invalid Weight", "Please connect scale or fetch a valid weight reading before logging.", "fa-triangle-exclamation");
+                return;
+            }
+
+            const plucker = pluckersDB[activePluckerIdx];
+            const fineVal = parseInt(document.getElementById('fine-count-slider').value);
+            const now = new Date();
+            const timeStr = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+
+            const newLog = {
+                time: timeStr,
+                id: plucker.id,
+                name: plucker.name,
+                net: weight,
+                fine: fineVal,
+                synced: isOnline
+            };
+
+            kioskLogs.unshift(newLog);
+            plucker.todayKg = parseFloat((plucker.todayKg + weight).toFixed(2));
+
+            if (!isOnline) {
+                pendingSyncCount++;
+                const badge = document.getElementById('sync-queue-badge');
+                badge.classList.remove('hidden');
+                document.getElementById('pending-count').innerText = pendingSyncCount;
+            }
+
+            renderKioskLogs();
+            renderWageLedger();
+            showModal("Receipt Printed", `Weight of ${weight} kg logged for ${plucker.name}. Thermal receipt printed.`, "fa-print");
+        }
+
+        // Render Local Kiosk Log Table
+        function renderKioskLogs() {
+            const tbody = document.getElementById('kiosk-logs-body');
+            tbody.innerHTML = '';
+            
+            kioskLogs.slice(0, 6).forEach(log => {
+                const tr = document.createElement('tr');
+                tr.className = "hover:bg-slate-50 border-b border-slate-100";
+                tr.innerHTML = `
+                    <td class="p-2 text-slate-500">${log.time}</td>
+                    <td class="p-2 font-bold text-slate-800">${log.name} (${log.id})</td>
+                    <td class="p-2 text-right font-bold text-tea-900">${log.net.toFixed(2)} kg</td>
+                    <td class="p-2 text-right text-emerald-700">${log.fine}%</td>
+                    <td class="p-2 text-center">
+                        ${log.synced 
+                            ? '<span class="text-emerald-600 font-bold"><i class="fa-solid fa-cloud-check"></i> Synced</span>' 
+                            : '<span class="text-amber-600 font-bold"><i class="fa-solid fa-clock"></i> Local</span>'}
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+
+            document.getElementById('session-counter').innerText = `Total Today: ${kioskLogs.length} Logs`;
+        }
+
+        // Render & Compute Wage Ledger Table
+        function renderWageLedger() {
+            const tbody = document.getElementById('wage-ledger-body');
+            tbody.innerHTML = '';
+
+            const baseRate = parseFloat(document.getElementById('slab-base-rate').value) || 9.0;
+            const targetKg = parseFloat(document.getElementById('slab-target-kg').value) || 20.0;
+            const overRate = parseFloat(document.getElementById('slab-over-rate').value) || 12.5;
+            const fineBonusRate = parseFloat(document.getElementById('slab-fine-bonus').value) || 1.5;
+
+            let grandLeaf = 0;
+            let grandFineSum = 0;
+            let grandPayout = 0;
+
+            pluckersDB.forEach((p, idx) => {
+                const weight = p.todayKg;
+                const fine = p.finePct;
+                
+                // Formula Logic
+                const basePay = Math.min(weight, targetKg) * baseRate;
+                const overKg = Math.max(0, weight - targetKg);
+                const incentivePay = overKg * overRate;
+                const qualityBonus = fine >= 70 ? weight * fineBonusRate : 0;
+                const netPayable = basePay + incentivePay + qualityBonus;
+
+                grandLeaf += weight;
+                grandFineSum += fine;
+                grandPayout += netPayable;
+
+                const tr = document.createElement('tr');
+                tr.className = "hover:bg-slate-50 border-b border-slate-100";
+                tr.innerHTML = `
+                    <td class="p-3">
+                        <div class="font-bold text-slate-800">${p.name}</div>
+                        <div class="text-[10px] text-slate-500">${p.id} • ${p.section}</div>
+                    </td>
+                    <td class="p-3 text-right font-bold text-slate-900">${weight.toFixed(2)}</td>
+                    <td class="p-3 text-right font-bold ${fine >= 70 ? 'text-emerald-700' : 'text-slate-600'}">${fine}%</td>
+                    <td class="p-3 text-right text-slate-600">₹ ${basePay.toFixed(2)}</td>
+                    <td class="p-3 text-right text-emerald-700">+ ₹ ${incentivePay.toFixed(2)}</td>
+                    <td class="p-3 text-right text-amber-600">+ ₹ ${qualityBonus.toFixed(2)}</td>
+                    <td class="p-3 text-right font-bold text-tea-900 bg-slate-50">₹ ${netPayable.toFixed(2)}</td>
+                    <td class="p-3 text-center">
+                        ${p.paid 
+                            ? '<span class="bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-full text-[10px] font-bold">DISBURSED</span>'
+                            : '<span class="bg-amber-100 text-amber-800 px-2 py-0.5 rounded-full text-[10px] font-bold">PENDING</span>'}
+                    </td>
+                    <td class="p-3 text-center">
+                        <button onclick="disburseSingleUPI(${idx})" ${p.paid ? 'disabled' : ''} class="px-2.5 py-1 ${p.paid ? 'bg-slate-200 text-slate-400 cursor-not-allowed' : 'bg-tea-800 hover:bg-tea-900 text-white'} rounded text-[11px] font-semibold transition">
+                            ${p.paid ? 'Paid' : 'Pay UPI'}
+                        </button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+
+            // Summary Footer Updates
+            document.getElementById('sum-total-leaf').innerText = `${grandLeaf.toFixed(2)} kg`;
+            document.getElementById('sum-avg-fine').innerText = `${(grandFineSum / pluckersDB.length).toFixed(1)}%`;
+            document.getElementById('sum-total-payout').innerText = `₹ ${grandPayout.toFixed(2)}`;
+        }
+
+        function recalculateAllWages() {
+            renderWageLedger();
+            showModal("Ledger Recalculated", "All plucker wage earnings updated using newly configured rate slabs.", "fa-calculator");
+        }
+
+        function disburseSingleUPI(idx) {
+            pluckersDB[idx].paid = true;
+            renderWageLedger();
+            showModal("UPI Disbursal Success", `Instant wage payout transferred to account of ${pluckersDB[idx].name}.`, "fa-bolt");
+        }
+
+        function disburseAllUPI() {
+            pluckersDB.forEach(p => p.paid = true);
+            renderWageLedger();
+            showModal("Batch Disbursal Success", "All pending plucker wages disbursed via direct bank / UPI gateway.", "fa-bolt");
+        }
+
+        // Render Reconciliation Module
+        function renderReconciliationTable() {
+            const tbody = document.getElementById('recon-table-body');
+            tbody.innerHTML = '';
+
+            let totalField = 0;
+            let totalFactory = 0;
+
+            reconciliationLots.forEach(lot => {
+                totalField += lot.fieldKg;
+                totalFactory += lot.gateKg;
+
+                const tr = document.createElement('tr');
+                tr.className = "hover:bg-slate-50 border-b border-slate-100";
+                tr.innerHTML = `
+                    <td class="p-3 font-bold text-slate-800">${lot.id}</td>
+                    <td class="p-3 text-slate-600">${lot.section}</td>
+                    <td class="p-3 text-right font-bold text-slate-800">${lot.fieldKg.toFixed(2)}</td>
+                    <td class="p-3 text-right font-bold text-slate-800">${lot.gateKg.toFixed(2)}</td>
+                    <td class="p-3 text-right font-bold text-red-600">-${lot.lossKg.toFixed(2)} kg</td>
+                    <td class="p-3 text-center">
+                        <span class="px-2 py-0.5 rounded font-bold text-[11px] ${lot.ok ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'}">
+                            ${lot.lossPct.toFixed(2)}%
+                        </span>
+                    </td>
+                    <td class="p-3 text-center">
+                        ${lot.ok 
+                            ? '<span class="text-emerald-700 font-bold"><i class="fa-solid fa-circle-check"></i> Passed</span>' 
+                            : '<span class="text-amber-700 font-bold"><i class="fa-solid fa-triangle-exclamation"></i> Flagged Loss</span>'}
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+
+            const totalLoss = totalField - totalFactory;
+            const totalLossPct = (totalLoss / totalField) * 100;
+
+            document.getElementById('recon-field-leaf').innerText = totalField.toFixed(2);
+            document.getElementById('recon-factory-leaf').innerText = totalFactory.toFixed(2);
+            document.getElementById('recon-shortage-val').innerText = `${totalLoss.toFixed(2)} kg (${totalLossPct.toFixed(2)}%)`;
+        }
+
+        function simulateNewDispatch() {
+            const newLot = {
+                id: `TRIP- Assam-${Math.floor(804 + Math.random() * 20)}`,
+                section: "Block C-2 (Classic)",
+                fieldKg: 450.00,
+                gateKg: 446.20,
+                lossKg: 3.80,
+                lossPct: 0.84,
+                ok: true
+            };
+            reconciliationLots.unshift(newLot);
+            renderReconciliationTable();
+            showModal("Trip Received", `Vehicle ${newLot.id} gate receipt logged with 0.84% allowable shrinkage loss.`, "fa-truck");
+        }
+
+        // Factory Calculations Engine
+        function calculateFactoryCosting() {
+            const greenLeaf = parseFloat(document.getElementById('fac-green-leaf').value) || 0;
+            const madeTea = parseFloat(document.getElementById('fac-made-tea').value) || 0;
+
+            if (greenLeaf <= 0) return;
+
+            const recoveryPct = (madeTea / greenLeaf) * 100;
+            const rawLeafCostPerKgMadeTea = (greenLeaf * 9.92) / madeTea; // 9.92 avg leaf cost
+
+            document.getElementById('calc-recovery-pct').innerText = `${recoveryPct.toFixed(2)}%`;
+            document.getElementById('calc-leaf-cost-mt').innerText = `₹ ${rawLeafCostPerKgMadeTea.toFixed(2)}`;
+        }
+
+        function generateEWayBill() {
+            showModal("GST E-Invoice Generated", "IRN & QR Code successfully registered with GST Portal for Guwahati Auction Lot #402.", "fa-qrcode");
+        }
+
+        function printReceipt() {
+            showModal("Thermal Print Triggered", "Sending receipt data to Bluetooth mobile printer device.", "fa-print");
+        }
+
+        // Utility Modal Display
+        function showModal(title, message, iconClass = "fa-check") {
+            document.getElementById('modal-title').innerText = title;
+            document.getElementById('modal-msg').innerText = message;
+            document.getElementById('modal-icon').innerHTML = `<i class="fa-solid ${iconClass}"></i>`;
+            document.getElementById('modal-backdrop').classList.remove('hidden');
+        }
+
+        function closeModal() {
+            document.getElementById('modal-backdrop').classList.add('hidden');
+        }
+    </script>
+</body>
+</html>
